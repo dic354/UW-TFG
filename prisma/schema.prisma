@@ -1,0 +1,207 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USUARIO ───────────────────────────────────────────────
+model Usuario {
+  id               Int       @id @default(autoincrement())
+  nombre           String    @db.VarChar(100)
+  email            String    @unique @db.VarChar(150)
+  contrasenaHash   String    @db.VarChar(255)
+  telefono         String?   @db.VarChar(20)
+  direccion        String?   @db.Text
+  ciudad           String?   @db.VarChar(100)
+  codigoPostal     String?   @db.VarChar(10)
+  rol              Rol       @default(cliente)
+  fechaRegistro    DateTime  @default(now())
+
+  // Relaciones
+  pedidos          Pedido[] // un usuario tiene varios pedidos
+  carrito          Carrito[] // un usuario tiene varios carritos
+  resenas          Resena[]
+
+  @@map("usuarios")
+}
+
+enum Rol {
+  cliente
+  administrador
+}
+
+// ─── CATEGORIA ─────────────────────────────────────────────
+model Categoria {
+  id               Int       @id @default(autoincrement())
+  nombre           String    @unique @db.VarChar(100)
+  descripcion      String?   @db.Text
+  imagenCategoria  String?   @db.VarChar(255)
+
+  // Relaciones
+  productos        Producto[]
+
+  @@map("categorias")
+}
+
+// ─── PRODUCTO ──────────────────────────────────────────────
+model Producto {
+  id               Int       @id @default(autoincrement())
+  nombre           String    @db.VarChar(200)
+  descripcion      String?   @db.Text
+  precio           Decimal   @db.Decimal(10, 2)
+  categoriaId      Int
+  stock            Int       @default(0)
+  talla            Talla?
+  color            String?   @db.VarChar(50)
+  imagenUrl        String?   @db.VarChar(255)
+  activo           Boolean   @default(true)
+  fechaCreacion    DateTime  @default(now())
+
+  // Relaciones
+  categoria        Categoria       @relation(fields: [categoriaId], references: [id])
+  detallesPedido   DetallePedido[]
+  carrito          Carrito[]
+  resenas          Resena[]
+  imagenes         ProductoImagen[]
+
+  @@map("productos")
+}
+
+enum Talla {
+  XS
+  S
+  M
+  L
+  XL
+  XXL
+}
+
+// ─── IMÁGENES ADICIONALES DEL PRODUCTO ─────────────────────
+// (esto faltaba en tu E-R, necesario para mostrar
+//  varias fotos de un mismo producto)
+model ProductoImagen {
+  id          Int      @id @default(autoincrement())
+  productoId  Int
+  url         String   @db.VarChar(255)
+  orden       Int      @default(0)
+
+  producto    Producto @relation(fields: [productoId], references: [id])
+
+  @@map("producto_imagenes")
+}
+
+// ─── PEDIDO ────────────────────────────────────────────────
+model Pedido {
+  id                 Int           @id @default(autoincrement())
+  usuarioId          Int
+  fechaPedido        DateTime      @default(now())
+  estado             EstadoPedido  @default(pendiente)
+  total              Decimal       @db.Decimal(10, 2)
+  direccionEnvio     String        @db.Text
+  ciudadEnvio        String        @db.VarChar(100)
+  codigoPostalEnvio  String        @db.VarChar(10)
+  metodoPago         MetodoPago
+  fechaEnvio         DateTime?
+  descuentoId        Int?
+  // Stripe/PayPal reference (faltaba en tu E-R)
+  pagoReferencia     String?       @db.VarChar(255)
+
+  // Relaciones
+  usuario            Usuario         @relation(fields: [usuarioId], references: [id])
+  detalles           DetallePedido[]
+  descuento          Descuento?      @relation(fields: [descuentoId], references: [id])
+
+  @@map("pedidos")
+}
+
+enum EstadoPedido {
+  pendiente
+  procesando
+  enviado
+  entregado
+  cancelado
+}
+
+enum MetodoPago {
+  tarjeta
+  paypal
+  transferencia
+}
+
+// ─── DETALLE PEDIDO ────────────────────────────────────────
+model DetallePedido {
+  id             Int      @id @default(autoincrement())
+  pedidoId       Int
+  productoId     Int
+  cantidad       Int
+  precioUnitario Decimal  @db.Decimal(10, 2)
+  subtotal       Decimal  @db.Decimal(10, 2)
+
+  // Relaciones
+  pedido         Pedido   @relation(fields: [pedidoId], references: [id])
+  producto       Producto @relation(fields: [productoId], references: [id])
+
+  @@map("detalle_pedidos")
+}
+
+// ─── CARRITO ───────────────────────────────────────────────
+model Carrito {
+  id            Int      @id @default(autoincrement())
+  usuarioId     Int
+  productoId    Int
+  cantidad      Int      @default(1)
+  fechaAgregado DateTime @default(now())
+
+  // Relaciones
+  usuario       Usuario  @relation(fields: [usuarioId], references: [id])
+  producto      Producto @relation(fields: [productoId], references: [id])
+
+  // Un usuario no puede tener el mismo producto
+  // dos veces en el carrito
+  @@unique([usuarioId, productoId])
+  @@map("carritos")
+}
+
+// ─── DESCUENTO ─────────────────────────────────────────────
+model Descuento {
+  id            Int      @id @default(autoincrement())
+  codigo        String   @unique @db.VarChar(50)
+  porcentaje    Decimal  @db.Decimal(5, 2)
+  fechaInicio   DateTime
+  fechaFin      DateTime
+  activo        Boolean  @default(true)
+  usosMaximos   Int?
+  usosActuales  Int      @default(0)
+
+  // Relaciones
+  pedidos       Pedido[]
+
+  @@map("descuentos")
+}
+
+// ─── RESEÑA ────────────────────────────────────────────────
+// (faltaba en tu E-R, muy importante para ecommerce)
+model Resena {
+  id          Int      @id @default(autoincrement())
+  usuarioId   Int
+  productoId  Int
+  puntuacion  Int      // 1 a 5 estrellas
+  comentario  String?  @db.Text
+  fechaResena DateTime @default(now())
+
+  // Relaciones
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  producto    Producto @relation(fields: [productoId], references: [id])
+
+  // Un usuario solo puede reseñar un producto una vez
+  @@unique([usuarioId, productoId])
+  @@map("resenas")
+}
