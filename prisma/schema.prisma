@@ -85,8 +85,7 @@ enum Talla {
 }
 
 // ─── IMÁGENES ADICIONALES DEL PRODUCTO ─────────────────────
-// (esto faltaba en tu E-R, necesario para mostrar
-//  varias fotos de un mismo producto)
+
 model ProductoImagen {
   id          Int      @id @default(autoincrement())
   productoId  Int
