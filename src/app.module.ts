@@ -2,14 +2,16 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { CategoriasModule } from './categorias/categorias.module';
+import { ProductosModule } from './productos/productos.module';
+import { CarritoModule } from './carrito/carrito.module';
 
-// Módulo raíz de la aplicación
-// Aquí se registran todos los módulos principales
 @Module({
   imports: [
-    PrismaModule, // Primero porque todos los demás lo necesitan
-    AuthModule, CategoriasModule,   // Módulo de autenticación
-    // Aquí irán llegando: CategoriasModule, ProductosModule...
+    PrismaModule,
+    AuthModule,
+    CategoriasModule,
+    ProductosModule,
+    CarritoModule,
   ],
 })
 export class AppModule {}
