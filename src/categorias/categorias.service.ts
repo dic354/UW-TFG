@@ -5,7 +5,7 @@ import { UpdateCategoriaDto } from './dto/update-categoria.dto';
 
 @Injectable()
 export class CategoriasService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // ─── LISTAR TODAS ──────────────────────────────────────
   async findAll() {
