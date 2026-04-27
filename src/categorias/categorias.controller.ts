@@ -2,6 +2,10 @@ import {
   Controller, Get, Post, Put, Delete,
   Body, Param, ParseIntPipe, UseGuards
 } from '@nestjs/common';
+import {
+  ApiTags, ApiOperation, ApiResponse,
+  ApiBearerAuth, ApiParam
+} from '@nestjs/swagger';
 import { CategoriasService } from './categorias.service';
 import { CreateCategoriaDto } from './dto/create-categoria.dto';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto';
@@ -9,23 +13,31 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/roles.guard';
 import { Roles } from '../common/roles.decorator';
 
+@ApiTags('Categorias')
 @Controller('categorias')
 export class CategoriasController {
   constructor(private readonly categoriasService: CategoriasService) {}
 
-  // Público - cualquiera puede ver las categorías
+  @ApiOperation({ summary: 'Listar todas las categorías' })
+  @ApiResponse({ status: 200, description: 'Lista de categorías' })
   @Get()
   findAll() {
     return this.categoriasService.findAll();
   }
 
-  // Público - cualquiera puede ver una categoría
+  @ApiOperation({ summary: 'Ver una categoría con sus productos' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({ status: 200, description: 'Categoría encontrada' })
+  @ApiResponse({ status: 404, description: 'Categoría no encontrada' })
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.categoriasService.findOne(id);
   }
 
-  // Solo administrador
+  @ApiOperation({ summary: 'Crear categoría (solo admin)' })
+  @ApiBearerAuth('JWT')
+  @ApiResponse({ status: 201, description: 'Categoría creada' })
+  @ApiResponse({ status: 403, description: 'Sin permisos' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('administrador')
   @Post()
@@ -33,7 +45,8 @@ export class CategoriasController {
     return this.categoriasService.create(dto);
   }
 
-  // Solo administrador
+  @ApiOperation({ summary: 'Editar categoría (solo admin)' })
+  @ApiBearerAuth('JWT')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('administrador')
   @Put(':id')
@@ -44,7 +57,8 @@ export class CategoriasController {
     return this.categoriasService.update(id, dto);
   }
 
-  // Solo administrador
+  @ApiOperation({ summary: 'Eliminar categoría (solo admin)' })
+  @ApiBearerAuth('JWT')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('administrador')
   @Delete(':id')
