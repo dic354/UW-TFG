@@ -8,6 +8,7 @@ import { PedidosModule } from './pedidos/pedidos.module';
 import { DescuentosModule } from './descuentos/descuentos.module';
 import { ResenasModule } from './resenas/resenas.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
+import { ProductoImagenModule } from './producto-imagen/producto-imagen.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { UsuariosModule } from './usuarios/usuarios.module';
     DescuentosModule,
     ResenasModule,
     UsuariosModule,
+    ProductoImagenModule,
   ],
 })
 export class AppModule {}
