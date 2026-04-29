@@ -1,410 +1,603 @@
-# UrbanWear Backend - API REST para E-commerce de Moda Urbana
+# UrbanWear — Backend API REST
 
-API RESTful construida con NestJS para una plataforma de e-commerce. Implementa una arquitectura modular que proporciona servicios robustos para gestión de productos, carritos de compra, procesamiento de pedidos y autenticación de usuarios. [1](#0-0) 
+REST API for the UrbanWear urban fashion e-commerce platform. Built with NestJS, Prisma ORM and MySQL.
 
-## 🛠 Stack Tecnológico
-
-- **Framework**: [NestJS](https://nestjs.com/) (v11.0.1) - Framework progresivo Node.js para aplicaciones servidor eficientes y escalables [2](#0-1) 
-- **Lenguaje**: [TypeScript](https://www.typescriptlang.org/) - Seguridad de tipos en toda la capa de dominio [3](#0-2) 
-- **ORM**: [Prisma](https://www.prisma.io/) (v6.19.3) - Acceso a base de datos con seguridad de tipos y gestión de esquemas [4](#0-3) 
-- **Autenticación**: [Passport.js](https://www.passportjs.org/) con JWT (JSON Web Tokens) [5](#0-4) 
-- **Documentación**: [Swagger (OpenAPI)](https://swagger.io/) - Documentación interactiva disponible en `/api` [6](#0-5) 
-
-## 🏗 Arquitectura del Sistema
-
-UrbanWear sigue un enfoque modular donde cada dominio de negocio está encapsulado en su propio módulo NestJS. Todos los módulos se agregan en el `AppModule`. [7](#0-6) 
-
-### Módulos Principales
-
-```mermaid
-graph TD
-    subgraph "Infraestructura Core"
-        ["PrismaModule"]
-        ["AuthModule"]
-    end
-
-    subgraph "Catálogo de Productos"
-        ["CategoriasModule"]
-        ["ProductosModule"]
-        ["ProductoImagenModule"]
-    end
-
-    subgraph "Ventas y Logística"
-        ["CarritoModule"]
-        ["PedidosModule"]
-        ["DescuentosModule"]
-    end
-
-    subgraph "Experiencia de Usuario"
-        ["UsuariosModule"]
-        ["ResenasModule"]
-    end
-
-    ["AppModule"] --> ["PrismaModule"]
-    ["AppModule"] --> ["AuthModule"]
-    ["AppModule"] --> ["CategoriasModule"]
-    ["AppModule"] --> ["ProductosModule"]
-    ["AppModule"] --> ["CarritoModule"]
-    ["AppModule"] --> ["PedidosModule"]
-    ["AppModule"] --> ["DescuentosModule"]
-    ["AppModule"] --> ["ResenasModule"]
-    ["AppModule"] --> ["UsuariosModule"]
-    ["AppModule"] --> ["ProductoImagenModule"]
-```
-
-## 🚀 Instalación y Configuración
-
-### Prerrequisitos
-
-- Node.js (v18 o superior)
-- npm o yarn
-- Base de datos (PostgreSQL recomendado)
-
-### Pasos de Instalación
-
-1. **Clonar el repositorio**
-   ```bash
-   git clone https://github.com/dic354/UW-backend.git
-   cd UW-backend
-   ```
-
-2. **Instalar dependencias**
-   ```bash
-   npm install
-   ```
-
-3. **Configurar variables de entorno**
-   ```bash
-   cp .env.example .env
-   ```
-   Configurar las siguientes variables:
-   - `DATABASE_URL`: URL de conexión a la base de datos
-   - `JWT_SECRET`: Secreto para firmar tokens JWT
-
-4. **Generar cliente Prisma**
-   ```bash
-   npx prisma generate
-   ```
-
-5. **Ejecutar migraciones de base de datos**
-   ```bash
-   npx prisma migrate dev
-   ```
-
-## 🏃‍♂️ Ejecución de la Aplicación
-
-### Desarrollo
-
-```bash
-# Modo desarrollo con recarga automática
-npm run start:dev
-```
-
-### Producción
-
-```bash
-# Compilar para producción
-npm run build
-
-# Ejecutar en modo producción
-npm run start:prod
-```
-
-### Testing
-
-```bash
-# Ejecutar pruebas unitarias
-npm run test
-
-# Ejecutar pruebas e2e
-npm run test:e2e
-
-# Generar reporte de cobertura
-npm run test:cov
-``` [8](#0-7) 
-
-## 📚 Documentación API
-
-La API cuenta con documentación interactiva mediante Swagger/OpenAPI:
-
-- **URL**: `http://localhost:3000/api`
-- **Autenticación**: Se requiere token JWT (obtenido en `/auth/login`) [9](#0-8) 
-
-### Endpoints Principales
-
-| Módulo | Endpoints | Descripción |
-|--------|-----------|-------------|
-| **Autenticación** | `/auth/login`, `/auth/register` | Gestión de usuarios y tokens JWT |
-| **Usuarios** | `/usuarios/me`, `/usuarios/me/password` | Perfil y gestión de cuenta |
-| **Productos** | `/productos`, `/productos/:id` | Catálogo con filtros avanzados |
-| **Categorías** | `/categorias`, `/categorias/:id` | Gestión de categorías |
-| **Carrito** | `/carrito`, `/carrito/add` | Gestión del carrito de compras |
-| **Pedidos** | `/pedidos`, `/pedidos/:id` | Procesamiento de órdenes |
-| **Descuentos** | `/descuentos/validar`, `/descuentos` | Códigos de descuento |
-
-## 🔐 Flujo de Autenticación
-
-La API utiliza una combinación de Guards y Strategies para asegurar los endpoints:
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant "main.ts (ValidationPipe)" as VP
-    participant "AuthGuard (JWT)" as AG
-    participant "RolesGuard" as RG
-    participant "Controller" as CTRL
-    participant "PrismaService" as DB
-
-    Client->>VP: HTTP Request (JSON Payload)
-    VP->>VP: Validate DTOs
-    VP->>AG: Pass validated data
-    AG->>AG: Verify JWT Token
-    AG->>RG: Check User Role
-    RG->>CTRL: Execute Handler
-    CTRL->>DB: Query Database
-    DB-->>CTRL: Return Model
-    CTRL-->>Client: HTTP Response
-``` [10](#0-9) 
-
-## 📁 Estructura del Proyecto
-
-```
-src/
-├── app.module.ts          # Módulo raíz
-├── main.ts                # Punto de entrada
-├── auth/                  # Módulo de autenticación
-├── usuarios/              # Gestión de usuarios
-├── productos/             # Catálogo de productos
-├── categorias/            # Gestión de categorías
-├── carrito/               # Carrito de compras
-├── pedidos/               # Procesamiento de pedidos
-├── descuentos/            # Sistema de descuentos
-├── producto-imagen/       # Gestión de imágenes
-├── resenas/               # Sistema de reseñas
-├── common/                # Utilidades compartidas
-└── prisma/                # Configuración de Prisma
-```
-
-## 🔧 Configuración Global
-
-La aplicación configura pipes globales de validación usando `ValidationPipe`, asegurando que los payloads entrantes coincidan con los DTOs definidos. [10](#0-9) 
-
-## 📝 Licencia
-
-Este proyecto es privado y no está licenciado para distribución pública. [11](#0-10) 
+**Repository:** `https://github.com/dic354/urbanwear-backend`
 
 ---
 
-## Notas
+## Table of Contents
 
-- El README actual muestra un conflicto de merge entre la plantilla estándar de NestJS y el contenido personalizado del proyecto [12](#0-11) 
-- La configuración de Swagger incluye autenticación Bearer JWT con persistencia de autorización [13](#0-12) 
-- Todos los módulos siguen el patrón estándar de NestJS con Controller, Service y DTOs correspondientes
+- [Overview](#overview)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Local Development](#local-development)
+- [Environment Variables](#environment-variables)
+- [Database](#database)
+- [API Endpoints](#api-endpoints)
+- [Authentication](#authentication)
+- [Data Validation](#data-validation)
+- [API Documentation](#api-documentation)
+- [Deployment](#deployment)
+- [Docker](#docker)
+- [Project Structure](#project-structure)
+- [Author](#author)
 
-Wiki pages you might want to explore:
-- [UrbanWear Backend — Overview (dic354/UW-backend)](/wiki/dic354/UW-backend#1)
-- [Users Service & Controller (dic354/UW-backend)](/wiki/dic354/UW-backend#5.1)
+---
 
-### Citations
+## Overview
 
-**File:** src/main.ts (L10-14)
+UrbanWear Backend is a monolithic REST API built with NestJS that centralizes all business logic for the e-commerce platform. It handles product catalog management, role-based authentication, shopping cart, orders, discount codes and product reviews.
+
+The architecture follows a Client-Server pattern where the Angular frontend consumes the API endpoints via HTTP requests. All internal communication between modules is handled through dependency injection managed by the NestJS IoC container.
+
+---
+
+## Tech Stack
+
+| Technology | Version | Purpose |
+|---|---|---|
+| NestJS | ^11.0 | Main backend framework |
+| TypeScript | ^5.0 | Programming language |
+| Prisma ORM | ^6.0 | Data access layer and schema management |
+| MySQL | 8.0 | Relational database |
+| JWT | — | Stateless authentication |
+| Passport.js | — | Authentication middleware and strategies |
+| bcrypt | — | Secure password hashing |
+| class-validator | — | Declarative DTO validation |
+| class-transformer | — | Object transformation and serialization |
+| Swagger / OpenAPI | — | Interactive API documentation |
+| Docker | — | MySQL and phpMyAdmin containers for local development |
+
+---
+
+## Architecture
+
+### Module structure
+
+NestJS organizes the application into modules. Each module encapsulates a business domain and is composed of three layers:
+
+```
+Controller
+    Receives the HTTP request, extracts parameters and delegates
+    to the service. Contains no business logic.
+
+Service
+    Contains all business logic. Interacts with the database
+    through PrismaService. Injected into the controller.
+
+DTO (Data Transfer Object)
+    Defines and validates the structure of data entering and
+    leaving each endpoint. Uses class-validator decorators.
+```
+
+### HTTP request lifecycle
+
+```
+Incoming HTTP Request
+        |
+        v
+main.ts — ValidationPipe (global)
+    Validates and transforms the request body against the DTO
+        |
+        v
+JwtAuthGuard
+    Verifies the JWT token in the Authorization header
+    Returns 401 Unauthorized if invalid or expired
+        |
+        v
+RolesGuard
+    Checks that the user role matches the @Roles() decorator
+    Returns 403 Forbidden if insufficient permissions
+        |
+        v
+Controller
+    Extracts URL params, query params and body
+    Calls the corresponding Service method
+        |
+        v
+Service
+    Executes business logic
+    Interacts with PrismaService to query MySQL
+        |
+        v
+PrismaService
+    Executes the query against MySQL
+    Returns typed data to the Service
+        |
+        v
+HTTP Response
+```
+
+### Global PrismaModule
+
+`PrismaModule` is decorated with `@Global()`, making `PrismaService` available across all modules without needing to import it explicitly. All services receive it via dependency injection in their constructor.
+
 ```typescript
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+constructor(private prisma: PrismaService) {}
 ```
 
-**File:** src/main.ts (L17-20)
-```typescript
-  const config = new DocumentBuilder()
-    .setTitle('UrbanWear API')
-    .setDescription('API REST para la tienda online de moda urbana UrbanWear')
-    .setVersion('1.0')
+### Authentication flow
+
+```
+AuthService
+    Handles registration (hashes password with bcrypt) and login
+    (compares hash with bcrypt, generates JWT token on success).
+
+JwtStrategy
+    Runs on every protected request. Extracts the token from the
+    Authorization: Bearer <token> header, verifies its signature
+    with JWT_SECRET and looks up the user in the database.
+    If valid, attaches the user to the request as req.user.
+
+JwtAuthGuard
+    Intercepts the request before reaching the controller.
+    Activates JwtStrategy automatically.
+    Returns 401 Unauthorized if the token is invalid or expired.
+
+RolesGuard
+    Runs after JwtAuthGuard. Reads the @Roles() decorator from
+    the endpoint and compares the user role (req.user.rol) with
+    the required roles. Returns 403 Forbidden if they do not match.
 ```
 
-**File:** src/main.ts (L21-30)
-```typescript
-    .addBearerAuth(
-      {
-        // Configuración del token JWT en Swagger
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        description: 'Introduce el token JWT obtenido en /auth/login',
-      },
-      'JWT', // Nombre del esquema de seguridad
-    )
+### Order creation transaction flow
+
+The orders module is the most complex as it orchestrates multiple models within a single database transaction:
+
+```
+1.  Client sends POST /pedidos with shipping data and payment method
+2.  PedidosService fetches the user's cart items from the database
+3.  Validates that the cart is not empty
+4.  Validates available stock for each product in the cart
+5.  If a discount code is provided, verifies its validity and expiry
+6.  Calculates the total applying the discount if applicable
+7.  Executes a Prisma $transaction that atomically:
+    a. Creates the Pedido record
+    b. Creates DetallePedido records for each cart item
+    c. Decrements stock for each product
+    d. Increments usosActuales of the discount if one was applied
+    e. Deletes all cart items for the user
+8.  If any step fails, the transaction rolls back automatically
+    and no changes are persisted in the database
+9.  Returns the created order with all its details
 ```
 
-**File:** src/main.ts (L34-43)
-```typescript
-  SwaggerModule.setup('api', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true, // Mantiene el token al recargar
-    },
-  });
+---
 
-  await app.listen(3000);
+## Prerequisites
 
-  console.log('Servidor corriendo en: http://localhost:3000');
-  console.log('Documentación Swagger: http://localhost:3000/api');
-```
+- Node.js v18 or higher
+- npm v9 or higher
+- Docker Desktop installed and running
+- NestJS CLI: `npm install -g @nestjs/cli`
 
-**File:** package.json (L7-7)
-```json
-  "license": "UNLICENSED",
-```
+---
 
-**File:** package.json (L8-21)
-```json
-  "scripts": {
-    "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
-  },
-```
+## Local Development
 
-**File:** package.json (L23-24)
-```json
-    "@nestjs/common": "^11.0.1",
-    "@nestjs/core": "^11.0.1",
-```
-
-**File:** package.json (L25-36)
-```json
-    "@nestjs/jwt": "^11.0.2",
-    "@nestjs/passport": "^11.0.5",
-    "@nestjs/platform-express": "^11.0.1",
-    "@nestjs/swagger": "^11.4.2",
-    "@prisma/client": "^6.19.3",
-    "bcrypt": "^6.0.0",
-    "class-transformer": "^0.5.1",
-    "class-validator": "^0.15.1",
-    "dotenv": "^17.4.2",
-    "passport": "^0.7.0",
-    "passport-jwt": "^4.0.1",
-    "prisma": "^6.19.3",
-```
-
-**File:** package.json (L65-65)
-```json
-    "typescript": "^5.9.3",
-```
-
-**File:** README.md (L1-103)
-```markdown
-<<<<<<< HEAD
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+### 1. Clone the repository
 
 ```bash
-$ npm install
+git clone https://github.com/dic354/urbanwear-backend.git
+cd urbanwear-backend
 ```
 
-## Compile and run the project
+### 2. Install dependencies
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+### 3. Configure environment variables
+
+Create a `.env` file in the project root. See [Environment Variables](#environment-variables).
+
+### 4. Start Docker containers
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+docker compose up -d
 ```
+
+This starts:
+- MySQL 8.0 at `localhost:3306`
+- phpMyAdmin at `localhost:8080`
+
+### 5. Push schema to database and generate client
+
+```bash
+npx prisma db push
+npx prisma generate
+```
+
+`db push` applies the schema defined in `prisma/schema.prisma` to the database, creating all tables and relations. `generate` produces the typed Prisma client based on the schema.
+
+### 6. Start the development server
+
+```bash
+npm run start:dev
+```
+
+---
+
+## Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+# Database
+DATABASE_URL="mysql://urbanwear_user:urbanwear_pass@localhost:3306/urbanwear"
+
+# Authentication
+JWT_SECRET="your-strong-secret-key"
+```
+
+For production on the VPS, these variables are set directly in the server environment or via a process manager like PM2.
+
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | MySQL connection string |
+| `JWT_SECRET` | Secret key used to sign and verify JWT tokens |
+
+The `.env` file is listed in `.gitignore` and must never be committed to the repository.
+
+---
+
+## Database
+
+The database schema is defined in `prisma/schema.prisma` and contains the following entities:
+
+| Entity | Table | Description |
+|---|---|---|
+| Usuario | `usuarios` | Platform clients and administrators |
+| Categoria | `categorias` | Product classification categories |
+| Producto | `productos` | Full catalog of clothing and accessories |
+| ProductoImagen | `producto_imagenes` | Additional images per product |
+| Carrito | `carritos` | Shopping cart items per user |
+| Pedido | `pedidos` | Confirmed purchase orders |
+| DetallePedido | `detalle_pedidos` | Line items for each order |
+| Descuento | `descuentos` | Discount codes with percentage and validity |
+| Resena | `resenas` | Product ratings and reviews |
+
+### Entity relationships
+
+```
+Categoria   (1) ---- (N) Producto
+Producto    (1) ---- (N) ProductoImagen
+Producto    (1) ---- (N) DetallePedido
+Producto    (1) ---- (N) Carrito
+Producto    (1) ---- (N) Resena
+Usuario     (1) ---- (N) Pedido
+Usuario     (1) ---- (N) Carrito
+Usuario     (1) ---- (N) Resena
+Pedido      (1) ---- (N) DetallePedido
+Descuento   (1) ---- (N) Pedido
+```
+
+### Enumerations
+
+```
+Rol          -> cliente | administrador
+Talla        -> XS | S | M | L | XL | XXL
+EstadoPedido -> pendiente | procesando | enviado | entregado | cancelado
+MetodoPago   -> tarjeta | paypal | transferencia
+```
+
+---
+
+## API Endpoints
+
+### Auth
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| POST | `/auth/register` | Register new user | Public |
+| POST | `/auth/login` | Sign in and receive JWT token | Public |
+
+### Categorias
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| GET | `/categorias` | List all categories | Public |
+| GET | `/categorias/:id` | Get category with its products | Public |
+| POST | `/categorias` | Create category | Admin |
+| PUT | `/categorias/:id` | Update category | Admin |
+| DELETE | `/categorias/:id` | Delete category | Admin |
+
+### Productos
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| GET | `/productos` | List products with filters | Public |
+| GET | `/productos/:id` | Get product with reviews and images | Public |
+| POST | `/productos` | Create product | Admin |
+| PUT | `/productos/:id` | Update product | Admin |
+| DELETE | `/productos/:id` | Deactivate product | Admin |
+
+Available query parameters for `GET /productos`:
+
+| Parameter | Type | Description |
+|---|---|---|
+| `nombre` | string | Partial name search |
+| `categoriaId` | number | Filter by category |
+| `precioMin` | number | Minimum price |
+| `precioMax` | number | Maximum price |
+| `talla` | string | XS, S, M, L, XL or XXL |
+| `color` | string | Partial color search |
+| `pagina` | number | Page number, default 1 |
+| `limite` | number | Results per page, default 12 |
+
+### Carrito
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| GET | `/carrito` | View cart with calculated total | User |
+| POST | `/carrito` | Add product to cart | User |
+| PUT | `/carrito/:id` | Update item quantity | User |
+| DELETE | `/carrito/:id` | Remove item from cart | User |
+| DELETE | `/carrito` | Clear entire cart | User |
+
+### Pedidos
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| POST | `/pedidos` | Create order from cart | User |
+| GET | `/pedidos/mis-pedidos` | View my orders | User |
+| GET | `/pedidos/:id` | View order detail | User or Admin |
+| GET | `/pedidos` | List all orders | Admin |
+| PUT | `/pedidos/:id/estado` | Update order status | Admin |
+
+### Descuentos
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| POST | `/descuentos/validar` | Validate discount code | User |
+| GET | `/descuentos` | List all discounts | Admin |
+| GET | `/descuentos/:id` | Get discount | Admin |
+| POST | `/descuentos` | Create discount | Admin |
+| PUT | `/descuentos/:id` | Update discount | Admin |
+| DELETE | `/descuentos/:id` | Delete discount | Admin |
+
+### Resenas
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| GET | `/resenas/producto/:id` | Get product reviews | Public |
+| POST | `/resenas` | Create review | User (must have purchased) |
+| PUT | `/resenas/:id` | Edit review | Review author |
+| DELETE | `/resenas/:id` | Delete review | Author or Admin |
+
+### Usuarios
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| GET | `/usuarios/me` | View my profile | User |
+| PUT | `/usuarios/me` | Update my data | User |
+| PUT | `/usuarios/me/password` | Change password | User |
+| GET | `/usuarios` | List all users | Admin |
+| GET | `/usuarios/:id` | View user with order history | Admin |
+
+### Producto Imagenes
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| GET | `/producto-imagen/producto/:id` | Get product images | Public |
+| POST | `/producto-imagen` | Add image to product | Admin |
+| PUT | `/producto-imagen/:id` | Update image | Admin |
+| DELETE | `/producto-imagen/:id` | Delete image | Admin |
+
+---
+
+## Authentication
+
+The API uses JSON Web Tokens with a 7-day expiration. The token payload contains the user `id`, `email` and `rol`. Include it in requests via the HTTP header:
+
+```
+Authorization: Bearer <token>
+```
+
+### Roles
+
+| Role | Description |
+|---|---|
+| `cliente` | Can purchase, manage cart, view own orders and review purchased products |
+| `administrador` | Full access to catalog management, orders, discounts and users |
+
+All registered users receive the `cliente` role by default. The `administrador` role must be assigned manually in the database.
+
+### Guards
+
+`JwtAuthGuard` verifies the token is valid and not expired. Applied at controller or method level.
+
+`RolesGuard` verifies the user has the role required by the `@Roles()` decorator. Always used together with `JwtAuthGuard` since it depends on `req.user` being available.
+
+```typescript
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('administrador')
+@Post()
+create(@Body() dto: CreateCategoriaDto) {}
+```
+
+---
+
+## Data Validation
+
+All endpoints that receive data use DTOs validated with `class-validator`. The global `ValidationPipe` configured in `main.ts` enables the following options:
+
+| Option | Effect |
+|---|---|
+| `whitelist: true` | Automatically strips fields not declared in the DTO |
+| `forbidNonWhitelisted: true` | Returns 400 Bad Request if undeclared fields are received |
+| `transform: true` | Automatically converts received data to the DTO types |
+
+---
+
+## API Documentation
+
+Interactive Swagger documentation for all endpoints is available at:
+
+```
+https://api.urbanwear.es/api
+```
+
+To test protected endpoints from Swagger:
+
+1. Call `POST /auth/login` and copy the `access_token` from the response
+2. Click the `Authorize` button in the top right corner
+3. Enter the token and confirm
+4. All subsequent protected requests will include the token automatically
+
+---
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+The API is deployed on a Linux VPS (Ubuntu 22.04 LTS) running NestJS via PM2 with NGINX as a reverse proxy and Let's Encrypt for SSL.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Server stack
+
+```
+Internet
+    |
+    v
+NGINX (reverse proxy, SSL termination)
+    |
+    v
+PM2 (process manager, keeps NestJS alive)
+    |
+    v
+NestJS API (port 3000, internal)
+    |
+    v
+MySQL 8.0 (port 3306, internal only)
+```
+
+### Deployment steps
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# 1. Clone repository on the VPS
+git clone https://github.com/dic354/urbanwear-backend.git
+cd urbanwear-backend
+
+# 2. Install dependencies
+npm install
+
+# 3. Set environment variables on the server
+export DATABASE_URL="mysql://user:pass@localhost:3306/urbanwear"
+export JWT_SECRET="your-production-secret"
+
+# 4. Push schema to production database
+npx prisma db push
+npx prisma generate
+
+# 5. Build for production
+npm run build
+
+# 6. Start with PM2
+pm2 start dist/main.js --name urbanwear-api
+pm2 save
+pm2 startup
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Docker
 
-## Resources
+The `docker-compose.yml` file is used for local development only and defines the following services:
 
-Check out a few resources that may come in handy when working with NestJS:
+| Service | Image | Port | Description |
+|---|---|---|---|
+| mysql | mysql:8.0 | 3306 | Main database |
+| phpmyadmin | phpmyadmin/phpmyadmin | 8080 | Visual database administration |
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+# Start containers
+docker compose up -d
 
-## Support
+# Stop containers
+docker compose down
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Check container status
+docker ps
 
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
-=======
-# UW-TFG
-Repositorio para el desarrollo de un ecommerce con IA integrada
->>>>>>> 45464941f9ed451b7449e65d11dff230a48b4aa7
+# View service logs
+docker compose logs mysql
 ```
+
+---
+
+## Project Structure
+
+```
+urbanwear-backend/
+|-- prisma/
+|   `-- schema.prisma
+|-- src/
+|   |-- auth/
+|   |   |-- dto/
+|   |   |   |-- register.dto.ts
+|   |   |   `-- login.dto.ts
+|   |   |-- auth.controller.ts
+|   |   |-- auth.module.ts
+|   |   |-- auth.service.ts
+|   |   |-- jwt-auth.guard.ts
+|   |   `-- jwt.strategy.ts
+|   |-- categorias/
+|   |   |-- dto/
+|   |   |-- categorias.controller.ts
+|   |   |-- categorias.module.ts
+|   |   `-- categorias.service.ts
+|   |-- carrito/
+|   |   |-- dto/
+|   |   |-- carrito.controller.ts
+|   |   |-- carrito.module.ts
+|   |   `-- carrito.service.ts
+|   |-- common/
+|   |   |-- roles.decorator.ts
+|   |   `-- roles.guard.ts
+|   |-- descuentos/
+|   |   |-- dto/
+|   |   |-- descuentos.controller.ts
+|   |   |-- descuentos.module.ts
+|   |   `-- descuentos.service.ts
+|   |-- pedidos/
+|   |   |-- dto/
+|   |   |-- pedidos.controller.ts
+|   |   |-- pedidos.module.ts
+|   |   `-- pedidos.service.ts
+|   |-- prisma/
+|   |   |-- prisma.module.ts
+|   |   `-- prisma.service.ts
+|   |-- producto-imagen/
+|   |   |-- dto/
+|   |   |-- producto-imagen.controller.ts
+|   |   |-- producto-imagen.module.ts
+|   |   `-- producto-imagen.service.ts
+|   |-- productos/
+|   |   |-- dto/
+|   |   |-- productos.controller.ts
+|   |   |-- productos.module.ts
+|   |   `-- productos.service.ts
+|   |-- resenas/
+|   |   |-- dto/
+|   |   |-- resenas.controller.ts
+|   |   |-- resenas.module.ts
+|   |   `-- resenas.service.ts
+|   |-- usuarios/
+|   |   |-- dto/
+|   |   |-- usuarios.controller.ts
+|   |   |-- usuarios.module.ts
+|   |   `-- usuarios.service.ts
+|   |-- app.module.ts
+|   `-- main.ts
+|-- docker-compose.yml
+|-- tsconfig.json
+|-- nest-cli.json
+|-- package.json
+`-- .env.example
+```
+
+---
+
+## Author
+
+David Iguino Cortes and Jesus Gonzalvez Garcia   
+Almeria, Spain, 2026
