@@ -1,11 +1,8 @@
 # UrbanWear — Backend API REST
 
-API REST completa para la plataforma de comercio electrónico UrbanWear, una tienda online de moda urbana. Desarrollada con NestJS, Prisma ORM y MySQL como proyecto final de grado del ciclo formativo de Desarrollo de Aplicaciones Web.
+API REST completa para la plataforma de comercio electrónico UrbanWear, una tienda online de moda urbana. Desarrollada con NestJS, Prisma ORM y MySQL.
 
-**API en producción:** `https://api.urbanwear.es`
-**Documentación interactiva:** `https://api.urbanwear.es/api`
-**Frontend:** `https://urbanwear.es`
-**Repositorio:** `https://github.com/dic354/urbanwear-backend`
+**Repositorio:** `https://github.com/dic354/UW-backend`
 
 ---
 
@@ -162,54 +159,6 @@ AuthController  ProductosCtrl  PedidosCtrl
 - npm v9 o superior
 - Docker Desktop instalado y en ejecución
 - NestJS CLI: `npm install -g @nestjs/cli`
-
----
-
-## Instalación y configuración local
-
-### 1. Clonar el repositorio
-
-```bash
-git clone https://github.com/dic354/urbanwear-backend.git
-cd urbanwear-backend
-```
-
-### 2. Instalar dependencias
-
-```bash
-npm install
-```
-
-### 3. Configurar variables de entorno
-
-Crear un archivo `.env` en la raíz del proyecto. Ver sección [Variables de entorno](#variables-de-entorno).
-
-### 4. Levantar los contenedores Docker
-
-El archivo `docker-compose.yml` se encuentra en la carpeta padre. Desde esa carpeta:
-
-```bash
-docker compose up -d
-```
-
-Esto levanta MySQL 8.0 en `localhost:3306` y phpMyAdmin en `localhost:8080`.
-
-### 5. Aplicar el esquema de base de datos y generar el cliente Prisma
-
-```bash
-npx prisma db push
-npx prisma generate
-```
-
-`db push` lee `prisma/schema.prisma` y crea todas las tablas, relaciones y enumeraciones en MySQL. `generate` produce el cliente TypeScript completamente tipado que la aplicación usa para consultar la base de datos.
-
-### 6. Iniciar el servidor de desarrollo
-
-```bash
-npm run start:dev
-```
-
-El servidor arranca en `http://localhost:3000` con recarga automática activada. La documentación Swagger está disponible en `http://localhost:3000/api`.
 
 ---
 
@@ -962,7 +911,7 @@ El `ValidationPipe` global en `main.ts` está configurado con:
 
 ```typescript
 app.useGlobalPipes(new ValidationPipe({
-  whitelist: true,            // elimina campos no declarados silenciosamente
+  whitelist: true,            // elimina campos no declarados
   forbidNonWhitelisted: true, // devuelve 400 si hay campos no declarados
   transform: true,            // convierte cadenas de consulta a números, booleanos, etc
 }));
@@ -989,7 +938,7 @@ Todos los DTOs usan decoradores de `class-validator`. Validadores comunes usados
 
 ## Documentación Swagger
 
-La interfaz de Swagger está disponible en `http://localhost:3000/api` en desarrollo y en `https://api.urbanwear.es/api` en producción.
+La interfaz de Swagger está disponible en `http://localhost:3000/api`.
 
 Cada endpoint está anotado con `@ApiOperation`, `@ApiResponse`, `@ApiParam`, `@ApiQuery` y `@ApiBearerAuth`. La documentación es completamente interactiva y permite probar todos los endpoints directamente desde el navegador.
 
@@ -998,100 +947,6 @@ Para autenticarse en Swagger:
 2. Hacer clic en el botón `Authorize` en la esquina superior derecha
 3. Introducir el valor del token y hacer clic en `Authorize`
 4. Todas las peticiones posteriores incluirán el token JWT automáticamente
-
----
-
-## Despliegue en producción
-
-La API se despliega en un VPS con Linux Ubuntu 22.04 LTS. NestJS es gestionado por PM2 y servido a través de NGINX como proxy inverso con SSL de Let's Encrypt.
-
-### Stack del servidor
-
-```
-Internet (HTTPS puerto 443)
-         |
-    [NGINX]
-    Proxy inverso
-    Terminación SSL con Let's Encrypt
-         |
-    [PM2]
-    Gestor de procesos
-    Reinicio automático ante fallos
-    Gestión de logs
-         |
-    [NestJS] (puerto 3000, interno)
-         |
-    [MySQL 8.0] (puerto 3306, solo interno)
-```
-
-### Pasos de despliegue
-
-```bash
-# En el VPS
-
-# 1. Clonar repositorio
-git clone https://github.com/dic354/urbanwear-backend.git
-cd urbanwear-backend
-
-# 2. Instalar dependencias (solo producción)
-npm install --omit=dev
-
-# 3. Establecer variables de entorno
-export DATABASE_URL="mysql://usuario:contrasena@localhost:3306/urbanwear"
-export JWT_SECRET="clave-secreta-fuerte-produccion"
-
-# 4. Aplicar esquema de base de datos
-npx prisma db push
-npx prisma generate
-
-# 5. Compilar para producción
-npm run build
-
-# 6. Iniciar con PM2
-pm2 start dist/main.js --name urbanwear-api
-pm2 save
-pm2 startup
-```
-
-### Configuración de NGINX
-
-```nginx
-server {
-    listen 443 ssl;
-    server_name api.urbanwear.es;
-
-    ssl_certificate /etc/letsencrypt/live/api.urbanwear.es/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.urbanwear.es/privkey.pem;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-
-server {
-    listen 80;
-    server_name api.urbanwear.es;
-    return 301 https://$host$request_uri;
-}
-```
-
-### Actualizar el despliegue
-
-```bash
-# En el VPS
-cd urbanwear-backend
-git pull origin main
-npm install --omit=dev
-npx prisma generate
-npm run build
-pm2 restart urbanwear-api
-```
 
 ---
 
@@ -1246,6 +1101,5 @@ urbanwear-backend/
 
 ## Autor
 
-David Iguiño Cortés y Jesús Gonzálvez García
-Proyecto Final de Grado — Desarrollo de Aplicaciones Web
-Almería, España, 2025
+David Iguiño Cortés y Jesús Gonzálvez García — Desarrollo de Aplicaciones Web
+Almería, España, 2026
